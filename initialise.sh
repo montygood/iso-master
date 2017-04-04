@@ -19,9 +19,8 @@ wifi_connect() {
 }
 download_aif() {
 	clear
-	wget -N https://github.com/montygood/monty/archive/master.zip
-	unzip -o master.zip -d .
-	cd monty-master
+	wget -N https://github.com/montygood/monty/tarball/master -O - | tar xz
+	cd montygood*
 	sh inst.sh
 }
 dialog --title " Netzwerk Verbindung " --infobox "\nBitte warten..." 0 0 && sleep 8
