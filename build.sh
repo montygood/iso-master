@@ -1,5 +1,5 @@
 #!/bin/bash
-export version="arch-$(date +%Y.%m.%d)-dual.iso"
+export version="arch-$(date +%Y.%m.%d)-monty.iso"
 export iso_label="ARCH_$(date +%Y%m)"
 export aa=$(pwd)
 export customiso="$aa/customiso"
@@ -11,6 +11,7 @@ if [ ! -f /usr/bin/7z ] || [ ! -f /usr/bin/mksquashfs ] || [ ! -f /usr/bin/xorri
 	if [ ! -f /usr/bin/7z ]; then query="$query p7zip" ; fi
 	if [ ! -f /usr/bin/arch-chroot ]; then query="$query arch-install-scripts"; fi
 	if [ ! -f /usr/bin/xxd ]; then query="$query xxd"; fi
+	if [ ! -f /usr/bin/lynx ]; then query="$query lynx"; fi
 	sudo pacman -Syy $(echo "$query")
 fi
 echo "teste ob neues ISO vorhanden ist..."
@@ -57,28 +58,6 @@ prepare_x86_64() {
 	sudo mksquashfs squashfs-root airootfs.sfs -b 1024k -comp xz
 	sudo rm -r squashfs-root
 	md5sum airootfs.sfs > airootfs.md5
-	prepare_i686
-}
-prepare_i686() {
-	echo "Bearbeite i686..."
-	cd "$customiso"/arch/i686
-	sudo unsquashfs airootfs.sfs
-	sudo setarch i686 pacman --root squashfs-root --cachedir squashfs-root/var/cache/pacman/pkg --config squashfs-root/etc/pacman.conf --noconfirm -Syyy unzip
-	sudo setarch i686 pacman --root squashfs-root --cachedir squashfs-root/var/cache/pacman/pkg --config squashfs-root/etc/pacman.conf -Sl | awk '/\[installed\]$/ {print $1 "/" $2 "-" $3}' > "$customiso"/arch/pkglist.i686.txt
-	sudo setarch i686 pacman --root squashfs-root --cachedir squashfs-root/var/cache/pacman/pkg --config squashfs-root/etc/pacman.conf --noconfirm -Scc
-	sudo rm -f "$customiso"/arch/i686/squashfs-root/var/cache/pacman/pkg/*
-	sudo cp "$aa"/bash_profile "$customiso"/arch/i686/squashfs-root/etc/skel/.bash_profile
-	sudo cp "$aa"/customize.sh "$customiso"/arch/i686/squashfs-root/customize
-	sudo arch-chroot "$customiso"/arch/i686/squashfs-root/ /bin/bash /customize
-    sudo rm "$customiso"/arch/i686/squashfs-root/customize
-	sudo cp "$aa"/initialise.sh "$customiso"/arch/i686/squashfs-root/initialise
-	sudo chmod +x "$customiso"/arch/i686/squashfs-root/initialise	
-	cd "$customiso"/arch/i686
-	rm airootfs.sfs
-	echo "erstelle i686..."
-	sudo mksquashfs squashfs-root airootfs.sfs -b 1024k -comp xz
-	sudo rm -r squashfs-root
-	md5sum airootfs.sfs > airootfs.md5
 	create_iso
 }
 create_iso() {
@@ -96,6 +75,11 @@ create_iso() {
 	-no-emul-boot -isohybrid-gpt-basdat \
 	-output "$version" \
 	"$customiso"
+	finish
 }
-
+finish() {	
+	if [ -d "$customiso" ]; then
+		sudo rm -rf "$customiso"
+	fi
+}
 init
