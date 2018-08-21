@@ -15,7 +15,7 @@ if [ ! -f /usr/bin/7z ] || [ ! -f /usr/bin/mksquashfs ] || [ ! -f /usr/bin/xorri
 	sudo pacman -Syy $(echo "$query")
 fi
 echo "teste ob neues ISO vorhanden ist..."
-export archiso_link=$(lynx -dump $(lynx -dump http://arch.localmsp.org/arch/iso | grep "8\. " | awk '{print $2}') | grep "7\. " | awk '{print $2}')
+export archiso_link=$(lynx -dump $(lynx -dump https://mirror.puzzle.ch/archlinux/iso | grep "8\. " | awk '{print $2}') | grep "7\. " | awk '{print $2}')
 if [ -z "$archiso_link" ]; then
 	echo -e "ERROR: archiso link nicht gefunden"
 	sleep 4
