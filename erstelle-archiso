@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# entferne alte Dateien
+if [ -d monty ]; then
+  sudo rm -rf monty
+fi
+
+# kopiere 'monty'
+cp -r /usr/share/archiso/configs/releng/ monty
+
+# 1 - archiso_pxe.cfg
+sed -i '5 c\Starte monty (x86_64) Arch Linux Installer (Using NBD).' monty/syslinux/archiso_pxe.cfg
+sed -i '6 c\einfaches installieren von Arch Linux.' monty/syslinux/archiso_pxe.cfg
+sed -i '8 c\MENU LABEL Starte monty (x86_64) (NBD)' monty/syslinux/archiso_pxe.cfg
+sed -i '16 c\Starte monty (x86_64) Arch Linux Installer (Using NFS).' monty/syslinux/archiso_pxe.cfg
+sed -i '17 c\einfaches installieren von Arch Linux.' monty/syslinux/archiso_pxe.cfg
+sed -i '19 c\MENU LABEL Starte monty (x86_64) (NFS)' monty/syslinux/archiso_pxe.cfg
+sed -i '27 c\Starte monty (x86_64) Arch Linux Installer (Using HTTP).' monty/syslinux/archiso_pxe.cfg
+sed -i '28 c\einfaches installieren von Arch Linux.' monty/syslinux/archiso_pxe.cfg
+sed -i '30 c\MENU LABEL Starte monty (x86_64) (HTTP)' monty/syslinux/archiso_pxe.cfg
+
+# 2 - archiso_sys.cfg
+sed -i '5 c\Starte monty (x86_64) Arch Linux Installer.' monty/syslinux/archiso_sys.cfg
+sed -i '6 c\einfaches installieren von Arch Linux.' monty/syslinux/archiso_sys.cfg
+sed -i '8 c\MENU LABEL Starte monty (x86_64) Arch Linux Installer' monty/syslinux/archiso_sys.cfg
+sed -i '11 c\APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/syslinux/archiso_sys.cfg
+
+# 3 - hostname
+echo 'monty' > monty/airootfs/etc/hostname
+
+# 4 - kopiere Dateien/
+cp -f splash.png monty/syslinux/splash.png
+cp -f init monty/root/init
+
+# 5 - build.sh
+sed -i '5 c\iso_name=monty' monty/build.sh
+sed -i '6 c\iso_label="monty-$(date +%Y%m)"' monty/build.sh
+
+# 6 - Add required extra programs for installation
+echo "reflector" >> monty/packages.x86_64
+echo "unzip" >> monty/packages.x86_64
+
+# 7 - efi files
+sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/efiboot/loader/entries/archiso-x86_64-cd.conf
+sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/efiboot/loader/entries/archiso-x86_64-usb.conf
+
+cd monty/
+sudo ./build.sh -v
+
+cp /out/* ../
+
+if [ -d monty ]; then
+  sudo rm -rf monty
+fi
