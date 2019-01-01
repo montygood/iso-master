@@ -1,0 +1,151 @@
+#!/bin/bash
+function main {
+  echo $(date +%Y%m%d) > monty.log
+  print_heading
+  echo
+  print_one "Willkommen beim Monty installer von Arch Linux."
+  check_internet
+  Service="N"
+  Counter=0
+  while [ "$Service" = "N" ]
+  do
+    Counter=$((Counter+1))
+    if [ $Counter -gt 3 ]; then
+      error_exit
+    fi
+    if [ $(ls | grep master.zip) ]; then
+      rm -f master.zip
+    fi
+    wget -q https://github.com/montygood/monty/archive/master.zip
+    if [ $(ls | grep master.zip) ]; then
+      unzip -o master.zip &>> monty.log
+      cp -r monty-master/* .
+      FileCheck=$(ls | grep monty)
+      if [ -z "$FileCheck" ]; then
+        continue
+      fi
+    else
+      continue
+    fi
+    Service="Y"
+  done
+  rm -rf monty-master &>> monty.log
+  rm -f *.zip &>> monty.log
+  Service="N"
+  Counter=0
+  while [ "$Service" = "N" ]
+  do
+    Counter=$((Counter+1))
+    if [ $Counter -gt 3 ]; then
+      error_exit
+    fi
+    if [ -f inst.sh ]; then
+      Service="Y"
+    fi
+  done
+  chmod +x inst.sh
+  ./inst.sh
+}
+function print_heading {
+  clear
+  T_COLS=$(tput cols)
+  tput cup 1 $(((T_COLS/2)-20))
+  tput bold
+  printf "%-s\n" "$Backtitle"
+  tput sgr0
+}
+function print_one {
+  width=$(tput cols)
+  EMPTY=" "
+  lov=${#1}
+  if [ ${lov} -lt ${width} ]; then
+    stpt=$(( ($width - $lov) / 2 ))
+    EMPTY="$(printf '%*s' $stpt)"
+  fi
+  echo "$EMPTY $1"
+}
+function print_many {
+  echo "$EMPTY $1"
+}
+function aligned_prompt {
+  T_COLS=$(tput cols)
+  lov=${#1}
+  if [ ${lov} -lt ${T_COLS} ]; then
+    stpt=$(( ($T_COLS - $lov) / 2 ))
+  elif [ ${lov} -gt ${T_COLS} ]; then
+    stpt=0
+  else
+    stpt=$(( ($T_COLS - 10) / 2 ))
+  fi
+  EMPTY="$(printf '%*s' $stpt)"
+  read -p "$EMPTY $1" Response
+}
+function check_internet {
+  Service="N"
+  while [ "$Service" = "N" ]
+  do
+    print_one "ich brauche eine Internetzugang."
+    print_one "Teste die Internetverbindung,"
+    print_one "stelle sicher dass archlinux.org funktioniert"
+    check_connection
+    case "$Service" in
+      "N") print_one "Sorry, installation kann ohne Internet nicht starten."
+        exit
+      ;;
+      *) print_one "Lade das aktuelle Script von Github.com ..."
+        print_heading
+        Service="Y"
+    esac
+  done
+}
+function check_connection {
+  while [ "$Service" = "N" ]
+  do
+    ping -q -c3 archlinux.org &>/dev/null
+    PingTest=$?
+    if [ ${PingTest} -ne 0 ]; then
+      print_one "starte wifi-menu"
+      wifi-menu &>/dev/null
+      ping -q -c3 archlinux.org &>/dev/null
+      PingTest=$?
+      if [ ${PingTest} -ne 0 ]; then
+        print_heading
+        echo
+        print_one "Kein Internetzugang."
+        print_one "stelle sicher dass das Internet funktioniert,"
+        print_one "oder ist archlinux.org offline?"
+        print_one "versuche es mit einem Netzwerkkabel."
+        aligned_prompt "erneut Versuchen? (J/n): "
+        if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
+          exit
+        else
+          continue
+        fi
+      else
+        Service="Y"
+        echo "wifi=Y" >> monty.log
+      fi
+    else
+      Service="Y"
+      echo "wifi=Y" >> monty.log
+    fi
+  done
+}
+function error_exit {
+  print_one "kann das Scripts nicht herunterladen."
+  print_one "Probleme mit der github.com verbindung"
+  aligned_prompt "erneut Versuchen? (J/n): "
+  if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
+    exit
+  else
+    Counter=0
+  fi
+}
+# Declare & initialise variablen
+Backtitle="Monty - Arch Linux installation script"
+PingTest=""
+Chosen="cli"
+Counter=0
+Service="N"
+loadkeys de_CH-latin1
+main
