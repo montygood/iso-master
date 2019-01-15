@@ -5,6 +5,10 @@ if [ -d monty ]; then
   sudo rm -rf monty
 fi
 
+if [ -f monty*.iso ]; then
+  rm monty*.iso
+fi
+
 if [ ! -d /usr/share/archiso/configs/releng/ ]; then
 	if [ ! -d /usr/share/archiso/configs/releng/ ]; then query="archiso"; fi
 	sudo pacman -Syy $(echo "$query")
@@ -48,16 +52,11 @@ echo "unzip" >> monty/packages.x86_64
 # 7 - efi files
 sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/efiboot/loader/entries/archiso-x86_64-cd.conf
 sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/efiboot/loader/entries/archiso-x86_64-usb.conf
-
+yes | sudo pacman -Scc
 cd monty/
 sudo ./build.sh -v
-
-if [ -f monty*.iso ]; then
-  rm monty*.iso
-fi
-
-cp ./monty/out/* .
-
+cp ./out/* ../
+cd ..
 if [ -d monty ]; then
   sudo rm -rf monty
 fi
