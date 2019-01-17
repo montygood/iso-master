@@ -1,96 +1,56 @@
 #!/bin/bash
-# Funktionen
 function main {
 	print_heading
-	check_internet
-	Service="N"
-	Counter=0
-	while [ "$Service" = "N" ]
-		do
-			Counter=$((Counter+1))
-			if [ $Counter -gt 3 ]; then
-				error_exit
-			fi
-			if [ $(ls | grep master.zip) ]; then
-				rm -f master.zip
-			fi
-			print_one "Lade Datei..."
-			wget -q https://github.com/montygood/monty/archive/master.zip --show-progress
-			if [ $(ls | grep master.zip) ]; then
-				print_one "entpacke Dateien"
-				unzip -o master.zip
-				cp -r monty-master/* .
-				FileCheck=$(ls | grep monty)
-				if [ -z "$FileCheck" ]; then
-					continue
-				fi
-			else
-				continue
-			fi
-			Service="Y"
-	done
-	rm -rf monty-master
-	rm -f *.zip
-	while [ "$Service" = "N" ]
-		do
-			Counter=$((Counter+1))
-			if [ $Counter -gt 3 ]; then
-				error_exit
-			fi
-			if [ -f inst.sh ]; then
-				Service="Y"
-			fi
-	done
-	chmod +x inst.sh
-	./inst.sh
-}
-function check_internet {
-	while [ "$Service" = "N" ]
-	do
-		print_one "Teste die Internetverbindung,"
-		check_connection
-		case "$Service" in
-			"N") print_one "Sorry, installation kann ohne Internet nicht starten."
-				 exit
-				 ;;
-			*)   print_one "Lade das aktuelle Script von Github.com ..."
-				 print_heading
-				 Service="Y"
-		esac
-	done
-}
-function check_connection {
-	while [ "$Service" = "N" ]
-	do
+	if [ $(ls | grep master.zip) ]; then
+		print_one "entferne alte Dateien..."
+		rm -f master.zip
+	fi
+	print_heading
+	print_one "Teste die Internetverbindung...."
+	ping -q -c3 archlinux.org &>/dev/null
+	PingTest=$?
+	if [ ${PingTest} -ne 0 ]; then
+		print_heading
+		print_one "Kein Internetzugang."
+		print_one "versuche es mit Wireless"
+		print_one ""
+		wifi-menu &>/dev/null
+		print_heading
+		print_one "Teste Internet mit Wireless ..."
 		ping -q -c3 archlinux.org &>/dev/null
 		PingTest=$?
 		if [ ${PingTest} -ne 0 ]; then
-			print_one "versuche es mit Wireless"
-			wifi-menu &>/dev/null
-			ping -q -c3 archlinux.org &>/dev/null
-			PingTest=$?
-			if [ ${PingTest} -ne 0 ]; then
-				print_heading
-				print_one "Kein Internetzugang."
-				print_one "versuche es mit einem Netzwerkkabel."
-				aligned_prompt "erneut Versuchen? (J/n): "
-				if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
-					exit
-				else
-					continue
-				fi
+			print_heading
+			print_one "Kein Internetzugang."
+			print_one "versuche es mit einem Netzwerkkabel."
+			print_one ""
+			aligned_prompt "erneut Versuchen? (J/n): "
+			if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
+				error_exit
 			else
-				Service="Y"
+				main
 			fi
-		else
-			Service="Y"
 		fi
-	done
+	fi
+	print_heading
+	print_one "mit dem Internet verbunden"
+	print_one "Lade Datei..."
+	print_one ""
+	wget -q https://github.com/montygood/monty/archive/master.zip --show-progress
+	print_heading
+	print_one "entpacke Dateien"
+	print_one ""
+	unzip -o master.zip
+	cp -r monty-master/* .
+	rm -rf monty-master
+	rm -f *.zip
+	chmod +x inst.sh
+	./inst.sh
 }
 function print_heading {
 	clear
 	T_COLS=$(tput cols)
-	tput cup 1 $(((T_COLS/2)-20))
+	tput cup 1 $(((T_COLS/2)-18))
 	tput bold
 	printf "%-s\n" "$Backtitle"
 	echo ""
@@ -120,19 +80,13 @@ function aligned_prompt {
 	read -p "$EMPTY $1" Response
 }
 function error_exit {
-	print_one "kann das Scripts nicht herunterladen."
-	aligned_prompt "erneut Versuchen? (J/n): "
-	if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
-		exit
-	else
-		Counter=0
-	fi
+	print_heading
+	print_one "Kein Internetzugang."
+	print_one "konnte das Scripts nicht herunterladen."
+	print_one "geben sie reboot ein mit Enter"
+	exit
 }
 # Declare & initialise variablen
-Backtitle="Willkommen beim Monty installer von Arch Linux."
-PingTest=""
-Chosen="cli"
-Counter=0
-Service="N"
+Backtitle="Willkommen zum Monty Arch-installer."
 loadkeys de_CH-latin1
 main
