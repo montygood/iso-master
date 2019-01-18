@@ -7,7 +7,7 @@ function main {
 	fi
 	print_heading
 	print_one "Teste die Internetverbindung...."
-	if [ "`ping -c archlinux.org`" ]
+	if [ "ping -c archlinux.org" ]
 	then
 		continue
 	else
