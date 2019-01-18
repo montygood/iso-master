@@ -8,28 +8,18 @@ function main {
 	print_heading
 	print_one "Teste die Internetverbindung...."
 	ping -q -c3 archlinux.org &>/dev/null
-	PingTest=$?
-	if [ ${PingTest} -ne 0 ]; then
+	if [ $? -ne 0 ]; then
 		print_heading
 		print_one "Kein Internetzugang."
 		print_one "versuche es mit Wireless"
 		print_one ""
 		wifi-menu &>/dev/null
-		print_heading
-		print_one "Teste Internet mit Wireless ..."
 		ping -q -c3 archlinux.org &>/dev/null
-		PingTest=$?
-		if [ ${PingTest} -ne 0 ]; then
-			print_heading
-			print_one "Kein Internetzugang."
-			print_one "versuche es mit einem Netzwerkkabel."
-			print_one ""
-			aligned_prompt "erneut Versuchen? (J/n): "
-			if [ "$Response" = "N" ] || [ "$Response" = "n" ]; then
-				error_exit
-			else
-				main
-			fi
+		if [ $? -ne 0 ]; then
+			print_one "Immernoch kein Internet."
+			exit
+		else
+			continue
 		fi
 	fi
 	print_heading
@@ -37,7 +27,6 @@ function main {
 	print_one "Lade Datei..."
 	print_one ""
 	wget -q https://github.com/montygood/monty/archive/master.zip --show-progress
-	print_heading
 	print_one "entpacke Dateien"
 	print_one ""
 	unzip -o master.zip
@@ -66,27 +55,6 @@ function print_one {
 	fi
 	echo "$EMPTY $1"
 }
-function aligned_prompt {
-	T_COLS=$(tput cols)
-	lov=${#1}
-	if [ ${lov} -lt ${T_COLS} ]; then
-		stpt=$(( ($T_COLS - $lov) / 2 ))
-	elif [ ${lov} -gt ${T_COLS} ]; then
-		stpt=0
-	else
-		stpt=$(( ($T_COLS - 10) / 2 ))
-	fi
-	EMPTY="$(printf '%*s' $stpt)"
-	read -p "$EMPTY $1" Response
-}
-function error_exit {
-	print_heading
-	print_one "Kein Internetzugang."
-	print_one "konnte das Scripts nicht herunterladen."
-	print_one "geben sie reboot ein mit Enter"
-	exit
-}
-# Declare & initialise variablen
 Backtitle="Willkommen zum Monty Arch-installer."
 loadkeys de_CH-latin1
 main
