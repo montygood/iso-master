@@ -7,23 +7,20 @@ function main {
 	fi
 	print_heading
 	print_one "Teste die Internetverbindung...."
-	ping -q -c3 archlinux.org &>/dev/null
-	PING=$?
-	if [ ${PING} -ne 0 ]; then
+	if [ "`ping -c archlinux.org`" ]
+	then
+		continue
+	else
 		print_heading
-		print_one "Kein Internetzugang."
-		print_one "versuche es mit Wireless"
-		print_one ""
+		print_one "Kein Internetzugang versuche es mit Wireless"
 		wifi-menu &>/dev/null
+		main
 	fi
 	print_heading
-	print_one "mit dem Internet verbunden"
 	print_one "Lade Datei..."
-	print_one ""
 	wget -q https://github.com/montygood/monty/archive/master.zip --show-progress
 	if [ $(ls | grep master.zip) ]; then
 		print_one "entpacke Dateien"
-		print_one ""
 		unzip -o master.zip
 		cp -r monty-master/* .
 		rm -rf monty-master
@@ -33,7 +30,6 @@ function main {
 	else
 		print_one "konnte Datei nicht herunterladen"
 		print_one "reboot eingeben um neu zu starten"
-	
 		exit
 	fi
 }
