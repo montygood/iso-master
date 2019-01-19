@@ -7,15 +7,38 @@ function main {
 	fi
 	print_heading
 	print_one "Teste die Internetverbindung...."
-	if [ "ping -c archlinux.org" ]
-	then
-		continue
-	else
-		print_heading
-		print_one "Kein Internetzugang versuche es mit Wireless"
-		wifi-menu &>/dev/null
-		main
-	fi
+	while true;
+	do
+		ping -c1 google.com &>/dev/null
+		if [ $? -eq 0 ]
+		then 
+			start
+		else
+			print_heading
+			print_one "Kein Internetzugang versuche es mit Wireless"
+			wifi-menu &>/dev/null
+			Counter=0
+			Counter=$((Counter+1))
+			if [ $Counter -gt 3 ]; then
+				print_heading
+				print_one "Kein Internetzugang"
+				print_one "versuche einen Neustart mit einem Netzwerkkabel"		
+				exit 0
+			fi
+			ping -c1 google.com &>/dev/null
+			if [ $? -eq 0 ]
+			then 
+				start
+			else
+				print_heading
+				print_one "Kein Internetzugang"
+				print_one "versuche einen Neustart mit einem Netzwerkkabel"		
+				exit 0
+			fi
+		fi
+	done
+}
+function start {
 	print_heading
 	print_one "Lade Datei..."
 	wget -q https://github.com/montygood/monty/archive/master.zip --show-progress
