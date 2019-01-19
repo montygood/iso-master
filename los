@@ -54,7 +54,7 @@ sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% sc
 sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=init' monty/efiboot/loader/entries/archiso-x86_64-usb.conf
 yes | sudo pacman -Scc
 cd monty/
-./build.sh -v
+sudo ./build.sh -v
 cp ./out/* ../
 cd ..
 if [ -d monty ]; then
