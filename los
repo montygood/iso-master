@@ -1,0 +1,49 @@
+#!/bin/bash
+if [ -d monty ]; then sudo rm -rf monty; fi
+if [ -f *.iso ]; then rm *.iso; fi
+#git clone https://github.com/arcolinuxiso/carli-1.git
+#mv carli* monty
+if [ ! -d /usr/share/archiso/configs/releng/ ]; then
+	if [ ! -d /usr/share/archiso/configs/releng/ ]; then query="archiso"; fi
+	sudo pacman -Syy $(echo "$query")
+fi
+cp -r /usr/share/archiso/configs/releng/ monty
+sed -i '5 c\Starte monty (x86_64) Arch Linux Installer.' monty/syslinux/archiso_sys.cfg
+sed -i '6 c\einfaches installieren von Arch Linux.' monty/syslinux/archiso_sys.cfg
+sed -i '8 c\MENU LABEL Starte monty (x86_64) Arch Linux Installer' monty/syslinux/archiso_sys.cfg
+sed -i '11 c\APPEND archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=monty' monty/syslinux/archiso_sys.cfg
+sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=monty' monty/efiboot/loader/entries/archiso-x86_64-cd.conf
+sed -i '6 c\options archisobasedir=%INSTALL_DIR% archisolabel=%ARCHISO_LABEL% script=monty' monty/efiboot/loader/entries/archiso-x86_64-usb.conf
+cp -f splash.png monty/syslinux/splash.png
+cp -f montyi monty/airootfs/root/monty
+if [ !-f monty.tar.gz ]; then
+	sudo chown -R root:root ./usr
+	sudo find ./usr -type d -exec chmod 755 {} \;
+	sudo find ./usr -type f -exec chmod 644 {} \;
+	tar -zcvf monty.tar.gz usr
+	cp monty.tar.gz monty/airootfs/root/monty.tar.gz
+fi
+if [ -f monty.tar.gz ]; then cp monty.tar.gz monty/airootfs/root/monty.tar.gz; fi
+if [ !-f fingerprint-gui-any.pkg.tar.xz ]; then #1.09
+	wget https://aur.archlinux.org/cgit/aur.git/snapshot/fingerprint-gui.tar.gz
+	tar -xvzf fingerprint-gui.tar.gz
+	rm -rf fingerprint-gui.tar.gz
+	cd fingerprint-gui
+	makepkg -s
+	mv fingerprint-gui*.pkg.tar.xz ../
+	cd ..
+	rm -rf fingerprint-gui
+fi
+if [ -f fingerprint-gui-any.pkg.tar.xz ]; then cp fingerprint-gui-any.pkg.tar.xz monty/airootfs/root/fingerprint-gui-any.pkg.tar.xz; fi
+echo 'monty' > monty/airootfs/etc/hostname
+sed -i '5 c\iso_name=monty' monty/build.sh
+sed -i '6 c\iso_label="monty-$(date +%Y%m)"' monty/build.sh
+echo " reflector" >> monty/packages.x86_64
+yes | sudo pacman -Scc
+cd monty/
+sudo ./build.sh -v
+cp ./out/* ../
+cd ..
+if [ -d monty ]; then
+  sudo rm -rf monty
+fi

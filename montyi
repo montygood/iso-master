@@ -1,0 +1,63 @@
+#!/bin/bash
+case $(tty) in /dev/tty[0-9]*)
+    setterm -blank 0 -powersave off ;;
+esac
+loadkeys de_CH-latin1
+function main {
+	print_heading
+	print_one "Teste die Internetverbindung...."
+	ping -c3 google.com &>/dev/null
+	if [ $? -eq 0 ]
+	then 
+		start
+	else
+		print_heading
+		print_one "Kein Internetzugang versuche es mit Wireless"
+		wifi-menu &>/dev/null
+		sleep 15s
+		ping -c3 google.com &>/dev/null
+		if [ $? -eq 0 ]
+		then 
+			start
+		else
+			print_heading
+			print_one "Kein Internetzugang"
+			print_one "versuche einen Neustart mit einem Netzwerkkabel"		
+			exit 0
+		fi
+	fi
+}
+function start {
+	print_heading
+	print_one "Lade Install Datei..."
+	wget -q https://raw.githubusercontent.com/montygood/monty/master/inst.sh --show-progress
+	if [ $(ls | grep inst.sh) ]; then
+		chmod +x inst.sh
+		./inst.sh
+	else
+		print_one "konnte Datei nicht herunterladen"
+		print_one "reboot eingeben um neu zu starten"
+		exit
+	fi
+}
+function print_heading {
+	clear
+	T_COLS=$(tput cols)
+	tput cup 1 $(((T_COLS/2)-18))
+	tput bold
+	printf "%-s\n" "$Backtitle"
+	echo ""
+	tput sgr0
+}
+function print_one {
+	width=$(tput cols)
+	EMPTY=" "
+	lov=${#1}
+	if [ ${lov} -lt ${width} ]; then
+		stpt=$(( ($width - $lov) / 2 ))
+		EMPTY="$(printf '%*s' $stpt)"
+	fi
+	echo "$EMPTY $1"
+}
+Backtitle="Willkommen zum Monty Arch-installer."
+main
